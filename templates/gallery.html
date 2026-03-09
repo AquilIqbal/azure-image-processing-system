@@ -1,0 +1,123 @@
+﻿{% extends "base.html" %}
+
+{% block title %}Gallery - Cloud_Azure{% endblock %}
+
+{% block content %}
+<section class="upload-card mx-auto">
+    <div class="upload-card-head d-flex justify-content-between align-items-center gap-2 flex-wrap">
+        <div>
+            <h2 class="h4 mb-0">Uploaded Files Gallery</h2>
+            <p class="mb-0 text-secondary small">All image and document uploads with processing metadata.</p>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+            <a href="{{ url_for('gallery', type='all', search=search, sort=sort) }}" class="btn btn-outline-primary rounded-pill px-3 gallery-toolbar-btn {% if type_filter in ['all', ''] %}active{% endif %}">All</a>
+            <a href="{{ url_for('gallery', type='image', search=search, sort=sort) }}" class="btn btn-outline-primary rounded-pill px-3 gallery-toolbar-btn {% if type_filter == 'image' %}active{% endif %}">
+                <i class="bi bi-image me-1"></i>Images
+            </a>
+            <a href="{{ url_for('gallery', type='document', search=search, sort=sort) }}" class="btn btn-outline-primary rounded-pill px-3 gallery-toolbar-btn {% if type_filter == 'document' %}active{% endif %}">
+                <i class="bi bi-file-earmark-text me-1"></i>Documents
+            </a>
+        </div>
+    </div>
+
+    <div class="p-4">
+        <form method="GET" action="{{ url_for('gallery') }}" class="mb-4">
+            <input type="hidden" name="type" value="{{ type_filter or 'all' }}">
+            <div class="row g-2">
+                <div class="col-md-7">
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-search"></i></span>
+                        <input type="text" class="form-control" name="search" value="{{ search }}" placeholder="Search by filename...">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select" name="sort">
+                        <option value="newest" {% if sort == 'newest' %}selected{% endif %}>Newest</option>
+                        <option value="oldest" {% if sort == 'oldest' %}selected{% endif %}>Oldest</option>
+                        <option value="largest" {% if sort == 'largest' %}selected{% endif %}>Largest</option>
+                        <option value="downloads" {% if sort == 'downloads' %}selected{% endif %}>Most Downloaded</option>
+                    </select>
+                </div>
+                <div class="col-md-2 d-grid">
+                    <button class="btn btn-primary" type="submit">Apply</button>
+                </div>
+            </div>
+        </form>
+
+        {% if images|length == 0 %}
+            <div class="empty-state-card text-center">
+                <h3 class="h5 mb-2">No files uploaded yet.</h3>
+                <p class="text-secondary mb-3">Upload your first file to get started.</p>
+                <a href="{{ url_for('images') }}" class="btn btn-primary">Upload File</a>
+            </div>
+        {% else %}
+            <div class="row g-4">
+                {% for file in images %}
+                    <div class="col-md-6 col-lg-4">
+                        <div class="card gallery-item-card h-100 gallery-card" data-type="{{ file.category_label|lower }}">
+                            {% if file.category_label == 'Image' %}
+                                <img src="{{ file.blob_url }}" class="card-img-top gallery-image" alt="{{ file.original_filename }}">
+                            {% else %}
+                                <div class="card-img-top gallery-placeholder d-flex align-items-center justify-content-center">
+                                    <div class="text-center">
+                                        {% if file.file_format|lower == 'pdf' %}
+                                            <i class="fa-solid fa-file-pdf file-icon-pdf"></i>
+                                        {% elif file.file_format|lower == 'docx' %}
+                                            <i class="fa-solid fa-file-word file-icon-docx"></i>
+                                        {% elif file.file_format|lower == 'txt' %}
+                                            <i class="fa-solid fa-file-lines file-icon-txt"></i>
+                                        {% elif file.file_format|lower == 'zip' %}
+                                            <i class="fa-solid fa-file-zipper file-icon-zip"></i>
+                                        {% else %}
+                                            <i class="fa-solid fa-file file-icon-default"></i>
+                                        {% endif %}
+                                        <div class="fw-semibold mt-2 text-muted">{{ file.file_format|upper }} file</div>
+                                    </div>
+                                </div>
+                            {% endif %}
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center gap-2 mb-2">
+                                    <h5 class="card-title text-truncate mb-0" title="{{ file.original_filename }}">{{ file.original_filename }}</h5>
+                                    <span class="badge category-badge {% if file.category_label == 'Image' %}text-bg-primary{% else %}text-bg-secondary{% endif %}">{{ file.category_label }}</span>
+                                </div>
+
+                                <div class="d-flex flex-wrap gap-2 mb-2">
+                                    <span class="badge text-bg-light">Ops: {{ file.operations_display }}</span>
+                                    <span class="badge text-bg-light">Resize: {{ file.resize_dimensions }}</span>
+                                    <span class="badge text-bg-light">Compression: {{ file.compression_badge }}</span>
+                                </div>
+
+                                <p class="card-text small text-muted mb-1"><strong>File Type:</strong> {{ file.file_format|upper }}</p>
+                                <p class="card-text small text-muted mb-1">Original Size: {{ file.original_size }} KB</p>
+                                <p class="card-text small text-muted mb-1">
+                                    Processed Size:
+                                    {% if file.processed_size == 'No processing' %}
+                                        {{ file.processed_size }}
+                                    {% else %}
+                                        {{ file.processed_size }} KB
+                                    {% endif %}
+                                </p>
+                                {% if file.category_label == 'Image' and file.savings_display %}
+                                    <p class="card-text small text-success mb-1"><strong>{{ file.savings_display }}</strong></p>
+                                {% endif %}
+                                <p class="card-text small text-muted mb-2">Downloads: {{ file.download_count or 0 }}</p>
+                            </div>
+                            <div class="card-footer gallery-actions {% if file.category_label == 'Image' or file.file_format|lower in ['pdf', 'txt', 'docx'] %}three-actions{% endif %} border-0 pt-0 pb-3 px-3">
+                                <a href="{{ url_for('download_image', image_id=file.id) }}" class="btn btn-success gallery-action-btn">Download</a>
+                                {% if file.category_label == 'Image' %}
+                                    <button type="button" class="btn btn-primary gallery-action-btn" onclick="openPreviewModal('{{ file.blob_url }}', '{{ file.file_format|lower }}', '{{ file.blob_url }}')">Preview</button>
+                                {% elif file.file_format|lower in ['pdf', 'txt', 'docx'] %}
+                                    <button type="button" class="btn btn-primary gallery-action-btn" onclick="openPreviewModal('{{ url_for('preview_file', file_id=file.id) }}', '{{ file.file_format|lower }}', '{{ file.blob_url }}')">Preview</button>
+                                {% endif %}
+                                <form action="{{ url_for('delete_image', image_id=file.id) }}" method="POST" class="gallery-action-form">
+                                    <button type="button" class="btn btn-danger gallery-action-btn" onclick="openDeleteModal('{{ url_for('delete_image', image_id=file.id) }}')">Delete</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

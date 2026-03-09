@@ -1,0 +1,7 @@
+cenv/
+__pycache__/
+instance/
+.env
+*.pyc
+*.pyo
+*.db

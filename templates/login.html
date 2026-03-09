@@ -1,0 +1,23 @@
+﻿{% extends "base.html" %}
+
+{% block title %}Login - Cloud_Azure{% endblock %}
+
+{% block content %}
+<section class="upload-card mx-auto" style="max-width: 520px;">
+    <div class="upload-card-head">
+        <h2 class="h4 mb-0">Login</h2>
+        <p class="mb-0 text-secondary small">Sign in to access your files.</p>
+    </div>
+    <form method="POST" action="{{ url_for('login') }}" class="p-4">
+        <div class="mb-3">
+            <label class="form-label" for="email">Email</label>
+            <input type="email" class="form-control field-rounded" id="email" name="email" required>
+        </div>
+        <div class="mb-3">
+            <label class="form-label" for="password">Password</label>
+            <input type="password" class="form-control field-rounded" id="password" name="password" required>
+        </div>
+        <button type="submit" class="btn btn-primary action-btn w-100">Login</button>
+    </form>
+</section>
+{% endblock %}

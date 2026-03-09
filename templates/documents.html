@@ -1,0 +1,109 @@
+﻿{% extends "base.html" %}
+
+{% block title %}Documents - Cloud_Azure{% endblock %}
+
+{% block content %}
+<section class="upload-card mx-auto">
+    <div class="upload-card-head">
+        <h2 class="h4 mb-0">Document Upload</h2>
+        <p class="mb-0 text-secondary small">Upload PDF, DOCX, or TXT files. Optionally convert and compress before cloud storage.</p>
+    </div>
+
+    <form action="{{ url_for('upload_document_only') }}" method="POST" enctype="multipart/form-data" class="p-4" id="documentUploadForm">
+        <div id="drop-area-document" class="drop-area mb-3">
+            <i class="bi bi-cloud-arrow-up me-1"></i> Drag & Drop files here
+        </div>
+        <div class="mb-3">
+            <label for="document" class="form-label">Select Document File</label>
+            <input class="form-control field-rounded" type="file" id="document" name="document" accept=".pdf,.docx,.txt" required>
+        </div>
+
+        <div class="row g-3">
+            <div class="col-lg-6">
+                <label for="document_conversion" class="form-label">Conversion</label>
+                <select class="form-select field-rounded" name="document_conversion" id="document_conversion">
+                    <option value="keep">Keep original</option>
+                    <option value="txt">Convert to TXT</option>
+                    <option value="docx">Convert to DOCX</option>
+                </select>
+                <div class="form-text">Supported conversions: DOCX to TXT, TXT to DOCX.</div>
+                <div id="pdfConversionNotice" class="form-text text-danger d-none">PDF conversion not supported.</div>
+            </div>
+
+            <div class="col-lg-6 d-flex align-items-end">
+                <div class="form-check doc-check">
+                    <input class="form-check-input" type="checkbox" id="document_compress" name="document_compress">
+                    <label class="form-check-label" for="document_compress">
+                        Compress document into ZIP before upload
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-4 d-flex justify-content-end">
+            <button type="submit" class="btn btn-primary action-btn px-4" id="documentUploadBtn">
+                <span class="default-label"><i class="bi bi-file-earmark-arrow-up me-1"></i>Upload Document</span>
+                <span class="loading-label d-none"><span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Uploading and Processing...</span>
+            </button>
+        </div>
+    </form>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const documentFileInput = document.getElementById("document");
+    const documentDropArea = document.getElementById("drop-area-document");
+    const conversionDropdown = document.getElementById("document_conversion");
+    const pdfConversionNotice = document.getElementById("pdfConversionNotice");
+
+    function updateDocumentConversionState() {
+        const file = documentFileInput.files[0];
+        if (!file) {
+            conversionDropdown.disabled = false;
+            pdfConversionNotice.classList.add("d-none");
+            return;
+        }
+
+        const extension = file.name.split(".").pop().toLowerCase();
+        if (extension === "pdf") {
+            conversionDropdown.value = "keep";
+            conversionDropdown.disabled = true;
+            pdfConversionNotice.classList.remove("d-none");
+        } else {
+            conversionDropdown.disabled = false;
+            pdfConversionNotice.classList.add("d-none");
+        }
+    }
+
+    documentFileInput.addEventListener("change", updateDocumentConversionState);
+
+    ["dragenter", "dragover"].forEach((eventName) => {
+        documentDropArea.addEventListener(eventName, (e) => {
+            e.preventDefault();
+            documentDropArea.classList.add("dragover");
+        });
+    });
+    ["dragleave", "drop"].forEach((eventName) => {
+        documentDropArea.addEventListener(eventName, (e) => {
+            e.preventDefault();
+            documentDropArea.classList.remove("dragover");
+        });
+    });
+    documentDropArea.addEventListener("drop", (e) => {
+        const files = e.dataTransfer.files;
+        if (files && files.length > 0) {
+            documentFileInput.files = files;
+            updateDocumentConversionState();
+        }
+    });
+
+    document.getElementById("documentUploadForm").addEventListener("submit", function() {
+        const button = document.getElementById("documentUploadBtn");
+        button.disabled = true;
+        button.querySelector(".default-label").classList.add("d-none");
+        button.querySelector(".loading-label").classList.remove("d-none");
+    });
+</script>
+{% endblock %}
+

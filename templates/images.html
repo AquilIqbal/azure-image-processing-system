@@ -1,0 +1,128 @@
+﻿{% extends "base.html" %}
+
+{% block title %}Images - Cloud_Azure{% endblock %}
+
+{% block content %}
+<section class="upload-card mx-auto">
+    <div class="upload-card-head">
+        <h2 class="h4 mb-0">Image Processing Upload</h2>
+        <p class="mb-0 text-secondary small">Upload and process image files before storing in Azure Blob Storage.</p>
+    </div>
+
+    <form action="{{ url_for('upload_image_only') }}" method="POST" enctype="multipart/form-data" class="p-4" id="imageUploadForm">
+        <div id="drop-area-image" class="drop-area mb-3">
+            <i class="bi bi-cloud-arrow-up me-1"></i> Drag & Drop files here
+        </div>
+        <div class="mb-3">
+            <label for="imageFile" class="form-label">Select Image File</label>
+            <input class="form-control field-rounded" type="file" id="imageFile" name="image" accept=".jpg,.jpeg,.png,.webp" required>
+            <img id="preview" class="img-fluid rounded mt-3 d-none" alt="Image preview" style="max-height: 260px;">
+        </div>
+
+        <div class="row g-3">
+            <div class="col-lg-4">
+                <label for="resize_option" class="form-label">Resize Options</label>
+                <select class="form-select field-rounded" name="resize_option" id="resize_option">
+                    <option value="none">No resize</option>
+                    <option value="512">512x512</option>
+                    <option value="1024">1024x1024</option>
+                    <option value="2048">2048x2048</option>
+                    <option value="custom">Custom size</option>
+                </select>
+                <div class="row g-2 mt-1">
+                    <div class="col">
+                        <input type="number" class="form-control field-rounded" name="custom_width" placeholder="Width" min="1">
+                    </div>
+                    <div class="col">
+                        <input type="number" class="form-control field-rounded" name="custom_height" placeholder="Height" min="1">
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <label for="compression_option" class="form-label">Compression Options</label>
+                <select class="form-select field-rounded" name="compression_option" id="compression_option">
+                    <option value="low">Low</option>
+                    <option value="medium" selected>Medium</option>
+                    <option value="high">High</option>
+                </select>
+            </div>
+
+            <div class="col-lg-4">
+                <label for="format_option" class="form-label">Format Conversion</label>
+                <select class="form-select field-rounded" name="format_option" id="format_option">
+                    <option value="keep">Keep original</option>
+                    <option value="jpg">JPG</option>
+                    <option value="png">PNG</option>
+                    <option value="webp">WEBP</option>
+                    <option value="gif">GIF</option>
+                    <option value="bmp">BMP</option>
+                    <option value="tiff">TIFF</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="mt-4 d-flex justify-content-end">
+            <button type="submit" class="btn btn-primary action-btn px-4" id="imageUploadBtn">
+                <span class="default-label"><i class="bi bi-upload me-1"></i>Upload Image</span>
+                <span class="loading-label d-none"><span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Uploading and Processing...</span>
+            </button>
+        </div>
+    </form>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const imageInput = document.getElementById("imageFile");
+    const imageDropArea = document.getElementById("drop-area-image");
+
+    function handleImagePreview(file) {
+        const preview = document.getElementById("preview");
+        if (!file || !file.type.startsWith("image/")) {
+            preview.classList.add("d-none");
+            preview.removeAttribute("src");
+            return;
+        }
+        const reader = new FileReader();
+        reader.onload = function() {
+            preview.src = reader.result;
+            preview.classList.remove("d-none");
+        };
+        reader.readAsDataURL(file);
+    }
+
+    imageInput.onchange = function(event) {
+        const file = event.target.files[0];
+        handleImagePreview(file);
+    };
+
+    ["dragenter", "dragover"].forEach((eventName) => {
+        imageDropArea.addEventListener(eventName, (e) => {
+            e.preventDefault();
+            imageDropArea.classList.add("dragover");
+        });
+    });
+    ["dragleave", "drop"].forEach((eventName) => {
+        imageDropArea.addEventListener(eventName, (e) => {
+            e.preventDefault();
+            imageDropArea.classList.remove("dragover");
+        });
+    });
+    imageDropArea.addEventListener("drop", (e) => {
+        const files = e.dataTransfer.files;
+        if (files && files.length > 0) {
+            imageInput.files = files;
+            handleImagePreview(files[0]);
+        }
+    });
+
+    document.getElementById("imageUploadForm").addEventListener("submit", function() {
+        const button = document.getElementById("imageUploadBtn");
+        button.disabled = true;
+        button.querySelector(".default-label").classList.add("d-none");
+        button.querySelector(".loading-label").classList.remove("d-none");
+    });
+</script>
+{% endblock %}
+

@@ -1,0 +1,81 @@
+﻿{% extends "base.html" %}
+
+{% block title %}Analytics - Cloud_Azure{% endblock %}
+
+{% block content %}
+<section class="upload-card mx-auto">
+    <div class="upload-card-head">
+        <h2 class="h4 mb-0">Upload Analytics</h2>
+        <p class="mb-0 text-secondary small">Summary statistics from Azure SQL metadata.</p>
+    </div>
+
+    <div class="p-4">
+        <div class="row g-3">
+            <div class="col-md-6 col-lg-4">
+                <div class="feature-card h-100">
+                    <h3 class="h6 text-secondary">Total Uploads</h3>
+                    <p class="display-6 mb-0">{{ stats.total_uploads }}</p>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-4">
+                <div class="feature-card h-100">
+                    <h3 class="h6 text-secondary">Total Images</h3>
+                    <p class="display-6 mb-0">{{ stats.total_images }}</p>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-4">
+                <div class="feature-card h-100">
+                    <h3 class="h6 text-secondary">Total Documents</h3>
+                    <p class="display-6 mb-0">{{ stats.total_documents }}</p>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-6">
+                <div class="feature-card h-100">
+                    <h3 class="h6 text-secondary">Total Storage Used</h3>
+                    <p class="display-6 mb-0">{{ stats.total_storage_mb }} MB</p>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-6">
+                <div class="feature-card h-100">
+                    <h3 class="h6 text-secondary">Average File Size</h3>
+                    <p class="display-6 mb-0">{{ stats.average_file_kb }} KB</p>
+                </div>
+            </div>
+        </div>
+        <div class="feature-card mt-4">
+            <h3 class="h6 text-secondary mb-3">Upload Distribution</h3>
+            <div class="chart-wrap">
+                <canvas id="fileTypeChart"></canvas>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const images = {{ stats.total_images }};
+    const documents = {{ stats.total_documents }};
+
+    new Chart(document.getElementById("fileTypeChart"), {
+        type: "pie",
+        data: {
+            labels: ["Images", "Documents"],
+            datasets: [{
+                data: [images, documents],
+                backgroundColor: ["#3b82f6", "#10b981"]
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: "top"
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

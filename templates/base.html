@@ -1,0 +1,184 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Cloud_Azure Image Processing System{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg top-nav">
+        <div class="container">
+            <a class="navbar-brand fw-semibold" href="{{ url_for('index') }}">Cloud_Azure</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav" aria-controls="mainNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="mainNav">
+                <ul class="navbar-nav ms-auto gap-lg-2">
+                    {% if current_user.is_authenticated %}
+                        <li class="nav-item"><a class="nav-link {% if active_page == 'home' %}active{% endif %}" href="{{ url_for('index') }}">Home</a></li>
+                        <li class="nav-item"><a class="nav-link {% if active_page == 'images' %}active{% endif %}" href="{{ url_for('images') }}">Images</a></li>
+                        <li class="nav-item"><a class="nav-link {% if active_page == 'documents' %}active{% endif %}" href="{{ url_for('documents') }}">Documents</a></li>
+                        <li class="nav-item"><a class="nav-link {% if active_page == 'gallery' %}active{% endif %}" href="{{ url_for('gallery') }}">Gallery</a></li>
+                        <li class="nav-item"><a class="nav-link {% if active_page == 'history' %}active{% endif %}" href="{{ url_for('history') }}">History</a></li>
+                        <li class="nav-item"><a class="nav-link {% if active_page == 'analytics' %}active{% endif %}" href="{{ url_for('analytics') }}">Analytics</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{{ url_for('logout') }}">Logout</a></li>
+                    {% else %}
+                        <li class="nav-item"><a class="nav-link {% if active_page == 'home' %}active{% endif %}" href="{{ url_for('index') }}">Home</a></li>
+                        <li class="nav-item"><a class="nav-link {% if active_page == 'login' %}active{% endif %}" href="{{ url_for('login') }}">Login</a></li>
+                        <li class="nav-item"><a class="nav-link {% if active_page == 'register' %}active{% endif %}" href="{{ url_for('register') }}">Register</a></li>
+                    {% endif %}
+                    <li class="nav-item d-flex align-items-center">
+                        <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Toggle theme">🌙</button>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <main class="page-wrap">
+        <div class="container">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }} alert-dismissible fade show mt-3" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <div id="deleteModal" class="delete-modal" aria-hidden="true">
+        <div class="delete-modal-content" role="dialog" aria-modal="true" aria-labelledby="deleteModalTitle">
+            <h3 id="deleteModalTitle" class="h5 mb-2">Delete File</h3>
+            <p class="text-secondary mb-0">Are you sure you want to delete this file?</p>
+            <div class="delete-modal-buttons">
+                <button type="button" class="cancel-btn" onclick="closeDeleteModal()">Cancel</button>
+                <button type="button" class="delete-btn" onclick="confirmDeleteModal()">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <form id="deleteModalForm" method="POST" class="d-none"></form>
+
+    <div id="previewModal" class="preview-modal" aria-hidden="true">
+        <div class="preview-modal-content" role="dialog" aria-modal="true" aria-labelledby="previewModalTitle">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h3 id="previewModalTitle" class="h5 mb-0">Document Preview</h3>
+                <button type="button" class="cancel-btn" onclick="closePreviewModal()">Close</button>
+            </div>
+            <iframe id="previewFrame" title="Document Preview"></iframe>
+            <img id="previewImage" class="preview-image-modal d-none" alt="Image preview">
+        </div>
+    </div>
+
+    <script>
+        let deleteModalUrl = "";
+
+        function openDeleteModal(url) {
+            deleteModalUrl = url;
+            const modal = document.getElementById("deleteModal");
+            modal.classList.add("show");
+            modal.setAttribute("aria-hidden", "false");
+            document.body.classList.add("modal-opened");
+        }
+
+        function closeDeleteModal() {
+            const modal = document.getElementById("deleteModal");
+            modal.classList.remove("show");
+            modal.setAttribute("aria-hidden", "true");
+            document.body.classList.remove("modal-opened");
+            deleteModalUrl = "";
+        }
+
+        function confirmDeleteModal() {
+            if (!deleteModalUrl) return;
+            const form = document.getElementById("deleteModalForm");
+            form.action = deleteModalUrl;
+            form.submit();
+        }
+
+        document.addEventListener("keydown", function(event) {
+            if (event.key === "Escape") {
+                closeDeleteModal();
+            }
+        });
+
+        document.getElementById("deleteModal").addEventListener("click", function(event) {
+            if (event.target === this) {
+                closeDeleteModal();
+            }
+        });
+
+        function openPreviewModal(url, type, blobUrl) {
+            const previewImage = document.getElementById("previewImage");
+            const previewFrame = document.getElementById("previewFrame");
+            const ext = (type || "").toLowerCase();
+            previewImage.classList.add("d-none");
+            previewFrame.classList.remove("d-none");
+
+            if (["jpg", "jpeg", "png", "webp", "gif", "bmp", "tiff"].includes(ext)) {
+                previewFrame.classList.add("d-none");
+                previewImage.classList.remove("d-none");
+                previewImage.src = blobUrl || url;
+            } else if (ext === "docx") {
+                const docxSource = blobUrl || url;
+                previewFrame.src = "https://view.officeapps.live.com/op/embed.aspx?src=" + encodeURIComponent(docxSource);
+            } else {
+                previewFrame.src = url;
+            }
+            const modal = document.getElementById("previewModal");
+            modal.classList.add("show");
+            modal.setAttribute("aria-hidden", "false");
+            document.body.classList.add("modal-opened");
+        }
+
+        function closePreviewModal() {
+            const modal = document.getElementById("previewModal");
+            modal.classList.remove("show");
+            modal.setAttribute("aria-hidden", "true");
+            document.getElementById("previewFrame").src = "";
+            document.getElementById("previewImage").src = "";
+            document.body.classList.remove("modal-opened");
+        }
+
+        document.getElementById("previewModal").addEventListener("click", function(event) {
+            if (event.target === this) {
+                closePreviewModal();
+            }
+        });
+
+        const toggle = document.getElementById("theme-toggle");
+        toggle.addEventListener("click", () => {
+            document.body.classList.toggle("dark-mode");
+            if (document.body.classList.contains("dark-mode")) {
+                localStorage.setItem("theme", "dark");
+                toggle.innerText = "☀️";
+            } else {
+                localStorage.setItem("theme", "light");
+                toggle.innerText = "🌙";
+            }
+        });
+
+        window.addEventListener("load", () => {
+            const savedTheme = localStorage.getItem("theme");
+            if (savedTheme === "dark") {
+                document.body.classList.add("dark-mode");
+                toggle.innerText = "☀️";
+            }
+        });
+    </script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>
+
