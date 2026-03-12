@@ -222,6 +222,10 @@ Deployment steps:
 4. Configure environment variables
 5. Azure automatically builds and deploys the application
 
+Deployed Website Link - 
+
+aquil-cloud-azure-a8fmbbczgsdueuf8.centralindia-01.azurewebsites.net
+
 ---
 
 # Future Improvements
